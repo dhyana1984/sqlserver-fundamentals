@@ -53,8 +53,40 @@ order by O1.custid, O1.orderid
 ---6---
 --返回2016年下单，但是2017年没下单的客户
 
-select distinct custid, companyname
+select custid, companyname
 from Sales.Customers C
+Where exists 
+	(
+		select O.custid from Sales.Orders O
+		where o.custid= c.custid and orderdate>='20150101' and orderdate<='20151231'
+	) and
+	not exists
+	(
+		select O.custid from Sales.Orders O
+		where o.custid= c.custid and orderdate>='20160101' and orderdate<='20161231'
+	)
 
 
+---7---
+---返回订购了产品12的客户
+Select distinct C.custid, companyname 
+from Sales.Customers C
+left join Sales.Orders O on c.custid = O.custid
+left join Sales.OrderDetails OD on O.orderid = OD.orderid
+where productid=12
+order by C.custid
 
+
+---8---
+---计算每个客户及其月度的采购总量
+select 
+CO1.custid, 
+CO1.ordermonth, 
+CO1.qty,
+(
+	select sum(CO2.qty) 
+	from Sales.CustOrders CO2
+	where CO2.ordermonth<=CO1.ordermonth and CO2.custid= CO1.custid
+	  ) AS runqty
+from Sales.CustOrders CO1
+order by custid,ordermonth
